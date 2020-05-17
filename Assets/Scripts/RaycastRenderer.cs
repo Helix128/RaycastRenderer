@@ -37,7 +37,7 @@ public class RaycastRenderer : MonoBehaviour
     void Update()
     {
         SunDir = Sun.transform.forward;
-        if (Mathf.Abs(pos.magnitude - transform.position.magnitude)>0.01f||Mathf.Abs(euler.magnitude-transform.eulerAngles.magnitude)>0.01f)
+        if (Mathf.Abs(pos.magnitude - transform.position.magnitude)>0.0001f||Mathf.Abs(euler.magnitude-transform.eulerAngles.magnitude)>0.0001f)
         {
             i = 0;
             h = 0;
@@ -52,8 +52,13 @@ public class RaycastRenderer : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        pos = transform.position;
-        euler = transform.eulerAngles;
+        Timer -= Time.fixedDeltaTime;
+        if (Timer < 0)
+        {
+            Timer = 0.5f;
+            pos = transform.position;
+            euler = transform.eulerAngles;
+        }
      
     }
     void RaycastRender()
