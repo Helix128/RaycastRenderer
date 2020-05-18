@@ -10,6 +10,7 @@ public class RaycastRenderer : MonoBehaviour
     public bool AutoStepSize;
     public float stepSizeX = 1;
     public float stepSizeY = 1;
+    public FilterMode filter;
     public Light Sun;
     public Color Background;
     public bool ShadeBounce;
@@ -35,7 +36,7 @@ public class RaycastRenderer : MonoBehaviour
         tracedPixels = 0;
         //Setup the target texture
         Final = new Texture2D(width, height);
-        Final.filterMode = FilterMode.Point;
+        Final.filterMode = filter;
 
         //Init rendering
         RaycastRender();
@@ -57,7 +58,7 @@ public class RaycastRenderer : MonoBehaviour
             i = 0;
             h = 0;
             Final = new Texture2D(width, height);
-            Final.filterMode = FilterMode.Point;
+            Final.filterMode = filter;
             Final.Apply();
             tracedPixels = 0;
             Render = true;

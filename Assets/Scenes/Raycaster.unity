@@ -172,7 +172,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b1f6d72bce565364e90ba38cee67ee73, type: 2}
+  - {fileID: 2100000, guid: 55680740dfc29f64f8a1969ef64346ab, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -848,6 +848,7 @@ MonoBehaviour:
   AutoStepSize: 1
   stepSizeX: 2
   stepSizeY: 2
+  filter: 0
   Sun: {fileID: 705507994}
   Background: {r: 1, g: 1, b: 1, a: 1}
   ShadeBounce: 1
