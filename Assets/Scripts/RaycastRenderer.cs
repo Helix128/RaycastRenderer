@@ -14,7 +14,9 @@ public class RaycastRenderer : MonoBehaviour
     public Color Background;
     public bool ShadeBounce;
     public bool ReflectionBounce;
+    public int ReflectionRayDepth;
     public float ReflectionRayLength;
+    public bool SpecularLight;
     Vector3 SunDir;
 
     public bool Render;
@@ -42,7 +44,7 @@ public class RaycastRenderer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Target.GetComponent<AspectRatioFitter>().aspectRatio = width / height;
+        Target.GetComponent<AspectRatioFitter>().aspectRatio = width*2 / height;
         if (AutoStepSize)
         {
             stepSizeX = width / 64;
@@ -97,7 +99,7 @@ public class RaycastRenderer : MonoBehaviour
             Vector2 tiling = rend.sharedMaterial.mainTextureScale;
             if (texture2D != null && texture2D.isReadable)
             {
-                Final.SetPixel(i, h, texture2D.GetPixel((int)pixelUV.x*(int)tiling.x,(int)pixelUV.y*(int)tiling.y) * rend.sharedMaterial.color);
+                Final.SetPixel(i, h, texture2D.GetPixel((int)pixelUV.x*(int)tiling.x,(int)pixelUV.y*(int)tiling.y) * rend.sharedMaterial.color*Sun.color);
                 Final.Apply();
 
             }
@@ -122,12 +124,13 @@ public class RaycastRenderer : MonoBehaviour
                 else
                 {
                     if (ReflectionBounce)
-                    {
-                        Debug.DrawRay(hit.point + hit.normal * 0.02f, hit.normal*100, Color.yellow);
-                        if (Physics.Raycast(hit.point + hit.normal * 0.02f, hit.normal, out ghit,ReflectionRayLength))
-                        {
-                            Final.SetPixel(i, h,Final.GetPixel(i, h)*(ghit.collider.GetComponent<MeshRenderer>().sharedMaterial.color));
-                            Final.Apply();
+                    { for (int r = 0; r < ReflectionRayDepth; r++) {
+                            Debug.DrawRay(hit.point + hit.normal * 0.02f, hit.normal * 100, Color.yellow);
+                            if (Physics.Raycast(hit.point + hit.normal * 0.02f, hit.normal, out ghit, ReflectionRayLength))
+                            {
+                                Final.SetPixel(i, h, new Color((ghit.collider.GetComponent<MeshRenderer>().sharedMaterial.color.r+Final.GetPixel(i,h).r)/2, (ghit.collider.GetComponent<MeshRenderer>().sharedMaterial.color.g + Final.GetPixel(i, h).g) / 2, (ghit.collider.GetComponent<MeshRenderer>().sharedMaterial.color.b + Final.GetPixel(i, h).b) / 2));
+                                Final.Apply();
+                            }
                         }
                     }
                 }
@@ -136,12 +139,19 @@ public class RaycastRenderer : MonoBehaviour
             {
                 if (ReflectionBounce)
                 {
-                    Debug.DrawRay(hit.point + hit.normal * 0.02f, hit.normal*100, Color.yellow);
-                    if (Physics.Raycast(hit.point + hit.normal * 0.02f, hit.normal, out rhit, ReflectionRayLength))
+                    Debug.DrawRay(hit.point + hit.normal * 0.01f, hit.normal*100, Color.yellow);
+                    if (Physics.Raycast(hit.point + hit.normal * 0.01f, hit.normal, out rhit, ReflectionRayLength))
                     {
                         Final.SetPixel(i, h, Final.GetPixel(i, h) * (rhit.collider.GetComponent<MeshRenderer>().sharedMaterial.color));
                         Final.Apply();
                     }
+                }
+            }
+            if (SpecularLight)
+            {
+                if (hit.normal == -SunDir)
+                {
+                    Final.SetPixel(i, h,Color.white);
                 }
             }
           
