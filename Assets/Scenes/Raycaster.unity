@@ -851,10 +851,10 @@ MonoBehaviour:
   Sun: {fileID: 705507994}
   Background: {r: 1, g: 1, b: 1, a: 1}
   ShadeBounce: 1
-  ReflectionBounce: 1
-  ReflectionRayDepth: 4
+  ReflectionBounce: 0
+  ReflectionRayDepth: 2
   ReflectionRayLength: Infinity
-  SpecularLight: 0
+  SpecularLight: 1
   Render: 1
   i: 0
   h: 0
