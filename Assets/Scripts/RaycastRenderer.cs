@@ -15,6 +15,7 @@ public class RaycastRenderer : MonoBehaviour
     public Color Background;
     public bool ShadeBounce;
     public int AOBounces;
+    public float AOFalloff;
     public float AORayDistance;
     public float AOPower;
    //reflections look bad valve pls fix
@@ -51,15 +52,15 @@ public class RaycastRenderer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Target.GetComponent<AspectRatioFitter>().aspectRatio = width * 2 / height;
+        Target.GetComponent<AspectRatioFitter>().aspectRatio = width*1.5f / height;
         if (AutoStepSize)
         {
-            stepSizeX = width / 128;
-            stepSizeY = height / 128;
+            stepSizeX = (float)width / 128;
+            stepSizeY = (float)height / 128;
 
         }
         SunDir = Sun.transform.forward;
-        if (Mathf.Abs(pos.magnitude - transform.position.magnitude) > 0.0001f || Mathf.Abs(euler.magnitude - transform.eulerAngles.magnitude) > 0.0001f)
+        if (Input.GetAxisRaw("Vertical")+Input.GetAxisRaw("Horizontal")>0.01f||Input.GetKey(KeyCode.Mouse1))
         {
             i = 0;
             h = 0;
@@ -103,7 +104,7 @@ public class RaycastRenderer : MonoBehaviour
         RaycastHit hit;
         RaycastHit shadehit;
         RaycastHit rhit;
-        Debug.DrawRay(TracingOffset + CamRay.origin + (transform.up * ((h - height) / height) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * (i - width / 2)) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up * .01f) / stepSizeY + (transform.up * (h - (height / 2)) * 0.01f) / stepSizeY, Color.red, 8f);
+        Debug.DrawRay(TracingOffset + CamRay.origin + (transform.up * ((h - height) / height) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * (i - width / 2)) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up * .01f) / stepSizeY + (transform.up * (h - (height / 2)) * 0.01f) / stepSizeY, pixelColor, 2f);
         tracedPixels++;
         if (Physics.Raycast(TracingOffset + CamRay.origin + (transform.up * ((h - height) / height) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * (i - width / 2)) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up * stepSizeX / 5) / stepSizeY + (transform.up * ((h - height / 2)) * 0.01f) / stepSizeY, out hit))
         {
@@ -146,7 +147,7 @@ public class RaycastRenderer : MonoBehaviour
                         Debug.DrawRay(hit.point + hit.normal * 0.002f, Vector3.Reflect(transform.forward, hit.normal), Color.black);
                         if (Physics.Raycast(hit.point + hit.normal * 0.002f, Vector3.Reflect(transform.forward, hit.normal), out shadehit, AORayDistance))
                         {
-                            Final.SetPixel(i, h, Final.GetPixel(i, h) - ColorClamp((((new Color(1, 1, 1, 0) / AOBounces) / (shadehit.distance * 100))) * AOPower));
+                            Final.SetPixel(i, h, Final.GetPixel(i, h) - ColorClamp((((new Color(1, 1, 1, 0) / AOBounces) / (shadehit.distance * AOFalloff*100))) * AOPower    ));
                             Final.Apply();
 
                         }
@@ -159,6 +160,7 @@ public class RaycastRenderer : MonoBehaviour
         }
         else
         {
+            
             Final.SetPixel(i, h, Background);
             Final.Apply();
         }
@@ -232,6 +234,10 @@ public class RaycastRenderer : MonoBehaviour
             return pixelColor;
         }
 
+    }
+    public Color SingleColor(float value)
+    {
+        return new Color(value, value, value, 1);
     }
 }
 
