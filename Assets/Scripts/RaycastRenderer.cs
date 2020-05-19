@@ -17,11 +17,11 @@ public class RaycastRenderer : MonoBehaviour
     public int AOBounces;
     public float AORayDistance;
     public float AOPower;
-    //public bool ReflectionBounce;
+   //reflections look bad valve pls fix
+    public bool ReflectionBounce;
+   public float ReflectionRayLength;
+    Vector3 RefOffset;
 
-    //public float ReflectionRayLength;
-    //public Vector3 RefOffset;
-  
     Vector3 SunDir;
 
     public bool Render;
@@ -51,16 +51,16 @@ public class RaycastRenderer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Target.GetComponent<AspectRatioFitter>().aspectRatio = width*2 / height;
+        Target.GetComponent<AspectRatioFitter>().aspectRatio = width * 2 / height;
         if (AutoStepSize)
         {
-            stepSizeX = width / 64;
-            stepSizeY = height / 64;
+            stepSizeX = width / 128;
+            stepSizeY = height / 128;
 
         }
         SunDir = Sun.transform.forward;
-        if (Mathf.Abs(pos.magnitude - transform.position.magnitude)>0.0001f||Mathf.Abs(euler.magnitude-transform.eulerAngles.magnitude)>0.0001f)
-        { 
+        if (Mathf.Abs(pos.magnitude - transform.position.magnitude) > 0.0001f || Mathf.Abs(euler.magnitude - transform.eulerAngles.magnitude) > 0.0001f)
+        {
             i = 0;
             h = 0;
             Final = new Texture2D(width, height);
@@ -79,7 +79,7 @@ public class RaycastRenderer : MonoBehaviour
             tracedPixels = 0;
             Render = true;
         }
-      
+
     }
     private void FixedUpdate()
     {
@@ -89,7 +89,7 @@ public class RaycastRenderer : MonoBehaviour
             Timer = 1f;
             pos = transform.position;
             euler = transform.eulerAngles;
-         
+
         }
         if (Render)
         {
@@ -98,55 +98,53 @@ public class RaycastRenderer : MonoBehaviour
     }
     void RaycastRender()
     {
-      Ray CamRay = Camera.main.ScreenPointToRay(transform.position);
+        Ray CamRay = Camera.main.ScreenPointToRay(new Vector3(Camera.main.pixelWidth / 2, Camera.main.pixelHeight / 2));
 
         RaycastHit hit;
         RaycastHit shadehit;
-  
-        Debug.DrawRay(TracingOffset+CamRay.origin+(transform.up*(h-width/2)/ Camera.main.fieldOfView)/stepSizeY, CamRay.direction + (transform.right * i)/stepSizeX * Camera.main.fieldOfView / 2000 + ( transform.up * .01f)/stepSizeY + (transform.up * (h - height / 4)/height)/stepSizeY, Color.red,8f);
+        RaycastHit rhit;
+        Debug.DrawRay(TracingOffset + CamRay.origin + (transform.up * ((h - height) / height) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * (i - width / 2)) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up * .01f) / stepSizeY + (transform.up * (h - (height / 2)) * 0.01f) / stepSizeY, Color.red, 8f);
         tracedPixels++;
-        if (Physics.Raycast(TracingOffset + CamRay.origin + (transform.up * (h - width / 2) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * i) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up *stepSizeX/5) / stepSizeY + (transform.up * (h - height / 4) / height) / stepSizeY, out hit))
+        if (Physics.Raycast(TracingOffset + CamRay.origin + (transform.up * ((h - height) / height) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * (i - width / 2)) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up * stepSizeX / 5) / stepSizeY + (transform.up * ((h - height / 2)) * 0.01f) / stepSizeY, out hit))
         {
-            MeshRenderer rend = hit.collider.GetComponent<MeshRenderer>();
-            Texture2D texture2D = rend.sharedMaterial.mainTexture as Texture2D;
-          
-            if (texture2D != null)
+
+
+
+            pixelColor = RayToColor(hit);
+            Final.SetPixel(i, h, pixelColor*Sun.color);
+            Final.Apply();
+
+
+
+            if (ReflectionBounce)
             {
-                Vector2 pixelUV = hit.textureCoord;
-                pixelUV.x *= texture2D.width;
-                pixelUV.y *= texture2D.height;
-                Vector2 tiling = rend.sharedMaterial.mainTextureScale;
-               pixelColor = Color.white;
-                if (texture2D.isReadable)
+                for (int ao = 0; ao < AOBounces; ao++)
                 {
-                    pixelColor = texture2D.GetPixel((int)pixelUV.x * (int)tiling.x, (int)pixelUV.y * (int)tiling.y) * rend.sharedMaterial.color * Sun.color;
-                    Final.SetPixel(i, h, texture2D.GetPixel((int)pixelUV.x * (int)tiling.x, (int)pixelUV.y * (int)tiling.y) * rend.sharedMaterial.color * Sun.color);
-                    Final.Apply();
+                    Debug.DrawRay(hit.point + hit.normal * 0.01f, Vector3.Reflect(CamRay.direction, hit.normal), Color.blue);
+                    if (Physics.Raycast(hit.point + hit.normal * 0.01f, Vector3.Reflect(CamRay.direction, hit.normal), out rhit,ReflectionRayLength))
+                    {
+                        pixelColor = RayToColor(rhit);
+                        Final.SetPixel(i, h, (Final.GetPixel(i, h) + ColorDivide(pixelColor,new Color(hit.distance*10,hit.distance*10,hit.distance*10))+new Color(0,0,0,1)));
+                        Final.Apply();
+
+                    }
                 }
             }
-            else
-            {
-                pixelColor = rend.sharedMaterial.color;
-                Final.SetPixel(i, h, rend.sharedMaterial.color);
-                Final.Apply();
-
-            }
-
 
 
 
             if (ShadeBounce)
             {
-                Debug.DrawRay(hit.point+hit.normal*0.002f, -SunDir*100, Color.yellow);
-                if (Physics.Raycast(hit.point+hit.normal*0.002f, -SunDir, out shadehit,Mathf.Infinity))
+                Debug.DrawRay(hit.point + hit.normal * 0.001f, -SunDir * 100, Color.yellow);
+                if (Physics.Raycast(hit.point + hit.normal * 0.001f, -SunDir, out shadehit, Mathf.Infinity))
                 {
-                    Final.SetPixel(i, h,Final.GetPixel(i,h)*RenderSettings.ambientLight);
+                    Final.SetPixel(i, h, Final.GetPixel(i, h) * RenderSettings.ambientLight);
                     Final.Apply();
-                  
+
                     for (int ao = 0; ao < AOBounces; ao++)
                     {
-                        Debug.DrawRay(hit.point + hit.normal * 0.02f, Vector3.Reflect(transform.forward, hit.normal), Color.black);
-                        if (Physics.Raycast(hit.point + hit.normal * 0.02f, Vector3.Reflect(transform.forward, hit.normal), out shadehit, AORayDistance))
+                        Debug.DrawRay(hit.point + hit.normal * 0.002f, Vector3.Reflect(transform.forward, hit.normal), Color.black);
+                        if (Physics.Raycast(hit.point + hit.normal * 0.002f, Vector3.Reflect(transform.forward, hit.normal), out shadehit, AORayDistance))
                         {
                             Final.SetPixel(i, h, Final.GetPixel(i, h) - ColorClamp((((new Color(1, 1, 1, 0) / AOBounces) / (shadehit.distance * 100))) * AOPower));
                             Final.Apply();
@@ -154,14 +152,14 @@ public class RaycastRenderer : MonoBehaviour
                         }
                     }
                 }
-                
+
             }
-         
-          
+
+
         }
         else
         {
-            Final.SetPixel(i, h,Background);
+            Final.SetPixel(i, h, Background);
             Final.Apply();
         }
 
@@ -185,22 +183,59 @@ public class RaycastRenderer : MonoBehaviour
 
             }
         }
+        Final.filterMode = filter;
         Target.texture = Final;
     }
-     public Color ColorClamp(Color input)
+    public Color ColorClamp(Color input)
     {
         return new Color(Mathf.Clamp01(input.r), Mathf.Clamp01(input.g), Mathf.Clamp01(input.b), Mathf.Clamp01(input.a));
 
     }
-        
-       
-     
+    public Color ColorDivide(Color d1,Color d2)
+    {
 
-  
-
+        return new Color(d1.r / d2.r, d1.g / d2.g, d1.b / d2.b, d1.a / d2.a);
     }
 
-//Unused old reflection code. Reflections were too ugly so i removed them.
+    public Vector3 Reflect(Vector3 input, Vector3 n)
+    {
+
+        return input - 2 * Vector3.Dot(input, n) * n;
+    }
+
+    public Color RayToColor(RaycastHit hit)
+    {
+        MeshRenderer rend = hit.collider.GetComponent<MeshRenderer>();
+        Texture2D texture2D = rend.sharedMaterial.mainTexture as Texture2D;
+
+        if (texture2D != null)
+        {
+            Vector2 pixelUV = hit.textureCoord;
+            pixelUV.x *= texture2D.width;
+            pixelUV.y *= texture2D.height;
+            Vector2 tiling = rend.sharedMaterial.mainTextureScale;
+            pixelColor = Color.white;
+            if (texture2D.isReadable)
+            {
+                pixelColor = texture2D.GetPixel((int)pixelUV.x * (int)tiling.x, (int)pixelUV.y * (int)tiling.y) * rend.sharedMaterial.color * Sun.color;
+                return pixelColor;
+            }
+            else
+            {
+                pixelColor = pixelColor = rend.sharedMaterial.color;
+                return pixelColor;
+            }
+        }
+        else
+        {
+            pixelColor = rend.sharedMaterial.color;
+            return pixelColor;
+        }
+
+    }
+}
+
+//Unused old reflection code. Reflections were too ugly this way.
 /*  if (ReflectionBounce)
                     {
 
