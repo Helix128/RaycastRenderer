@@ -15,6 +15,7 @@ public class RaycastRenderer : MonoBehaviour
     public Color Background;
     public bool ShadeBounce;
     public int AOBounces;
+    public float AORayDistance;
     public float AOPower;
     //public bool ReflectionBounce;
 
@@ -34,6 +35,7 @@ public class RaycastRenderer : MonoBehaviour
     Vector3 pos;
     Vector3 euler;
     Color pixelColor;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -99,9 +101,8 @@ public class RaycastRenderer : MonoBehaviour
       Ray CamRay = Camera.main.ScreenPointToRay(transform.position);
 
         RaycastHit hit;
-        RaycastHit shit;
-        RaycastHit ghit;
-        RaycastHit rhit;
+        RaycastHit shadehit;
+  
         Debug.DrawRay(TracingOffset+CamRay.origin+(transform.up*(h-width/2)/ Camera.main.fieldOfView)/stepSizeY, CamRay.direction + (transform.right * i)/stepSizeX * Camera.main.fieldOfView / 2000 + ( transform.up * .01f)/stepSizeY + (transform.up * (h - height / 4)/height)/stepSizeY, Color.red,8f);
         tracedPixels++;
         if (Physics.Raycast(TracingOffset + CamRay.origin + (transform.up * (h - width / 2) / Camera.main.fieldOfView) / stepSizeY, CamRay.direction + (transform.right * i) / stepSizeX * Camera.main.fieldOfView / 2000 + (transform.up *stepSizeX/5) / stepSizeY + (transform.up * (h - height / 4) / height) / stepSizeY, out hit))
@@ -136,17 +137,18 @@ public class RaycastRenderer : MonoBehaviour
 
             if (ShadeBounce)
             {
-                Debug.DrawRay(hit.point + hit.normal * 0.02f, -SunDir*100, Color.yellow);
-                if (Physics.Raycast(hit.point + hit.normal * 0.02f, -SunDir, out shit,Mathf.Infinity))
+                Debug.DrawRay(hit.point+hit.normal*0.002f, -SunDir*100, Color.yellow);
+                if (Physics.Raycast(hit.point+hit.normal*0.002f, -SunDir, out shadehit,Mathf.Infinity))
                 {
                     Final.SetPixel(i, h,Final.GetPixel(i,h)*RenderSettings.ambientLight);
                     Final.Apply();
                   
                     for (int ao = 0; ao < AOBounces; ao++)
                     {
-                        if (Physics.Raycast(shit.point + shit.normal * 0.02f, shit.normal + Vector3.right * 0.0001f + Vector3.up*0.0001f, out shit, 3))
+                        Debug.DrawRay(hit.point + hit.normal * 0.02f, Vector3.Reflect(transform.forward, hit.normal), Color.black);
+                        if (Physics.Raycast(hit.point + hit.normal * 0.02f, Vector3.Reflect(transform.forward, hit.normal), out shadehit, AORayDistance))
                         {
-                            Final.SetPixel(i, h, Final.GetPixel(i, h) - (((new Color(1, 1, 1, 0) / AOBounces) / (shit.distance * 100))) * AOPower);
+                            Final.SetPixel(i, h, Final.GetPixel(i, h) - ColorClamp((((new Color(1, 1, 1, 0) / AOBounces) / (shadehit.distance * 100))) * AOPower));
                             Final.Apply();
 
                         }
@@ -185,7 +187,11 @@ public class RaycastRenderer : MonoBehaviour
         }
         Target.texture = Final;
     }
-     
+     public Color ColorClamp(Color input)
+    {
+        return new Color(Mathf.Clamp01(input.r), Mathf.Clamp01(input.g), Mathf.Clamp01(input.b), Mathf.Clamp01(input.a));
+
+    }
         
        
      
