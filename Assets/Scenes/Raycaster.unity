@@ -172,7 +172,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 55680740dfc29f64f8a1969ef64346ab, type: 2}
+  - {fileID: 2100000, guid: b1f6d72bce565364e90ba38cee67ee73, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -545,13 +545,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: 0.14854416, y: 0.8513184, z: -0.36399636, w: 0.3474166}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 46.3, y: 135.6, z: 0}
 --- !u!1 &860367366
 GameObject:
   m_ObjectHideFlags: 0
@@ -852,11 +852,9 @@ MonoBehaviour:
   Sun: {fileID: 705507994}
   Background: {r: 1, g: 1, b: 1, a: 1}
   ShadeBounce: 1
-  ReflectionBounce: 0
-  ReflectionRayDepth: 2
-  ReflectionRayLength: Infinity
-  SpecularLight: 1
-  Render: 1
+  AOBounces: 4
+  AOPower: 0.33
+  Render: 0
   i: 0
   h: 0
   TracingOffset: {x: 0, y: 0, z: 0}
