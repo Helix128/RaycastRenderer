@@ -1,4 +1,4 @@
-# CPURaycasterUnity
+# RaycastRendererUnity
  Raycast Rendering experiment in Unity
  Done in Unity 2019.3.9f1.
 
